@@ -1,20 +1,26 @@
 from flask import Flask, request, jsonify
+from transformers import pipeline
 
 app = Flask(__name__)
 
-@app.route('/')
-def home():
-	return 'Welcome to the home page!'
+# Load pre-trained model from Hugging Face
+model = pipeline("sentiment-analysis")
 
-@app.route('/post', methods=['POST'])
-def post():
-	data = request.get_json()
-	comment = data.get('comment')
-	sentimen = data.get('sentimen')
-	
-	# Do something with the comment and sentimen
-	
-	return jsonify({'message': 'Post received successfully'})
+@app.route('/predict', methods=['POST'])
+def predict():
+    try:
+        data = request.json
+        text = data.get("text", "")
+
+        if not text:
+            return jsonify({"error": "No text provided"}), 400
+
+        # Perform inference
+        result = model(text)
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-	app.run()
+    app.run(debug=True)

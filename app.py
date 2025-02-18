@@ -1,24 +1,40 @@
 from flask import Flask, request, jsonify
-from transformers import pipeline
+import pickle
+from sklearn.feature_extraction.text import TfidfVectorizer
+import pandas as pd
 
 app = Flask(__name__)
 
-# Load pre-trained model from Hugging Face
-model = pipeline("sentiment-analysis")
+
+data_training = pd.read_csv('Training Kategori - Sheet1.csv')
+texts = data_training['feedback'].tolist() 
+
+category_model = pickle.load(open("./predict_category_model.pkl", "rb"))
+
+
+# Initialize vectorizer with the fixed vocabulary
+vectorizer = TfidfVectorizer(max_features=5000)
+vectorizer.fit_transform(texts)
 
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
+        # Get text from request
         data = request.json
-        text = data.get("text", "")
+        texts = data.get("texts", [])
 
-        if not text:
-            return jsonify({"error": "No text provided"}), 400
+        if not texts or not isinstance(texts, list):
+            return jsonify({"error": "Please provide a list of texts"}), 400
 
-        # Perform inference
-        result = model(text)
+        # Transform text using the trained vectorizer
+        text_transformed = vectorizer.transform(texts)
+        print(text_transformed)
 
-        return jsonify(result)
+        # Predict category
+        predictions = category_model.predict(text_transformed)
+
+        return jsonify({"predictions": predictions.tolist()})
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

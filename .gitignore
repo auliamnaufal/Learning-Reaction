@@ -1,3 +1,6 @@
 /venv
 
 __pycache__/
+
+predictions.csv
+text.csv

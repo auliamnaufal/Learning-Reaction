@@ -1,11 +1,16 @@
-from flask import Flask, request, jsonify
+import io
+from flask import Flask, abort, render_template, request, jsonify, send_file
+from flask_cors import CORS, cross_origin
 import pickle
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from transformers import pipeline , AutoTokenizer, AutoModelForSequenceClassification
 import os
+import datetime
 
 app = Flask(__name__)
+CORS(app) # allow CORS for all domains on all routes.
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 # Load training data for consistent vectorization
 data_training = pd.read_csv('Training Kategori - Sheet1.csv')
@@ -35,7 +40,64 @@ def label_text(teks):
   key = results[0]['label']
   return label_text[key]
 
+@app.route("/")
+def home():
+    return render_template("home.html")
+
+# Route untuk mini overview learning reaction
+@app.route("/mini_overview")
+def mini_overview():
+    return render_template("mini_overview.html")
+
+# Route untuk Halaman Input User
+@app.route("/user_input")
+def user_input():
+    return render_template("user_input.html")
+
+# Route untuk menampilkan tabel summary
+@app.route("/output")
+def output():
+    filename = request.args.get("filename")  # Get filename from request
+    
+    if not filename:
+        return abort(400, description="Filename parameter is missing.")
+
+    file_path = os.path.join("storage", filename)
+
+    if not os.path.isfile(file_path):
+        return abort(404, description="File not found.")
+
+    # Read CSV file into a Pandas DataFrame
+    try:
+        df = pd.read_csv(file_path)
+
+        # Convert DataFrame to list of dictionaries
+        data_summary = df.to_dict(orient="records")
+    except Exception as e:
+        return abort(500, description=f"Error reading CSV file: {str(e)}")
+    
+    print(data_summary)
+
+    return render_template("output.html", data_summary=data_summary)
+
+# Route untuk mengunduh data sebagai CSV
+@app.route("/download", methods=["POST"])
+def download():
+    filename = request.args.get("filename")  # Get filename from request
+
+    if not filename:
+        return abort(400, description="Filename parameter is missing.")
+
+    file_path = os.path.join("storage/", filename)  # Change "your_directory" as needed
+
+    if os.path.isfile(file_path):
+        return send_file(file_path, as_attachment=True)
+
+    return abort(404, description="File not found.")
+
+
 @app.route('/predict', methods=['POST'])
+@cross_origin()
 def predict():
     try:
         if 'file' not in request.files:
@@ -74,8 +136,8 @@ def predict():
                 output_data.append([sentence, category, sentiment])
 
         output_df = pd.DataFrame(output_data, columns=['Sentence', 'Category', 'Sentiment'])
-        output_filename = "predictions.csv"
-        output_df.to_csv(output_filename, index=False)
+        output_filename = filename.replace(".", f"-output-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.")
+        output_df.to_csv("storage/" + output_filename, index=False)
 
         return jsonify({"message": "Predictions saved successfully", "file": output_filename})
     

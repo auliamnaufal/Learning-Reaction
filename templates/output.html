@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Learning Reaction Summary</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <style>
+      /* Background */
+      body {
+        background: url("static/photo/output.png") no-repeat center center fixed;
+        background-size: cover;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+      }
+
+      /* Animasi Fade-in */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Container */
+      .container {
+        width: 90%;
+        max-width: 1100px;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.3);
+        animation: fadeIn 1s ease-in-out;
+      }
+
+      /* Title */
+      h1 {
+        font-size: 2.8rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 25px;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Table */
+      .table {
+        margin-top: 20px;
+        font-size: 1.2rem;
+      }
+      .table thead {
+        background-color: #343a40;
+        color: white;
+      }
+      .table tbody tr:hover {
+        background-color: rgba(253, 216, 53, 0.2);
+        transition: 0.3s;
+      }
+      .table th,
+      .table td {
+        padding: 15px;
+        text-align: center;
+      }
+
+      /* Tombol Download */
+      .btn-download {
+        background: linear-gradient(to bottom, #ffeb8a, #fdd835);
+        color: black;
+        font-size: 1.3rem;
+        padding: 14px 30px;
+        border-radius: 40px;
+        text-decoration: none;
+        font-weight: bold;
+        box-shadow: 0px 5px 8px rgba(0, 0, 0, 0.2);
+        transition: transform 0.2s, box-shadow 0.2s;
+        display: inline-block;
+        margin-top: 25px;
+        border: none;
+      }
+
+      .btn-download:hover {
+        background: linear-gradient(to bottom, #fdd835, #ffeb8a);
+        transform: scale(1.08);
+        box-shadow: 0px 7px 10px rgba(0, 0, 0, 0.3);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container text-center">
+      <h1>Learning Reaction Summary</h1>
+
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Predicted Category</th>
+            <th>Label</th>
+            <th>Summary</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data_summary %}
+          <tr>
+            <td>{{ row.Category }}</td>
+            <td>{{ row.Sentiment }}</td>
+            <td>{{ row.Sentence }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <button class="btn-download" onclick="downloadCSV()">Download CSV</button>
+    </div>
+
+    <script>
+      function downloadCSV() {
+        const searchParams = new URLSearchParams(window.location.search);
+        const filename = searchParams.get("filename");
+
+        fetch(`/download?filename=${filename}`, { method: "POST" })
+          .then((response) => response.blob()) // Convert response to a Blob
+          .then((blob) => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "predictions.csv"; // Set the filename
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+    </script>
+  </body>
+</html>

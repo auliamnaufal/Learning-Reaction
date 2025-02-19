@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Overview - Learning Reaction</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            background: url("static/photo/mini_overview.png") no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Efek Fade-in */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            max-width: 1200px;
+            width: 100%;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        /* Efek Hover pada Judul */
+        .title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: bold;
+            color: #333;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-out forwards;
+            line-height: 1.2;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        .title:hover {
+            color: #fdd835;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+        }
+
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            color: #333;
+            opacity: 0.9;
+            margin-bottom: 30px;
+            animation: fadeIn 1.2s ease-out forwards;
+            padding: 0 10px;
+            max-width: 800px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        /* Efek Hover pada Kartu */
+        .info-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .info-card-title {
+            font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .info-list {
+            text-align: left;
+            margin: 0;
+            padding-left: 20px;
+            font-size: clamp(0.9rem, 2vw, 1rem);
+        }
+
+        /* Efek Hover pada Tombol */
+        .btn-start {
+            background: linear-gradient(to bottom, #ffeb8a, #fdd835);
+            color: black;
+            font-size: clamp(1rem, 3vw, 1.4rem);
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+            margin-top: 10px;
+            animation: fadeIn 1.5s ease-out forwards;
+        }
+
+        .btn-start:hover {
+            background: linear-gradient(to bottom, #fdd835, #ffeb8a);
+            transform: scale(1.05);
+            box-shadow: 0px 6px 10px rgba(0, 0, 0, 0.3);
+            text-decoration: none;
+            color: black;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 20px 15px;
+            }
+            
+            .info-card {
+                margin-bottom: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">Mini Overview:<br>Learning Reaction</h1>
+
+        <div class="subtitle">
+            <strong>🧠 Apa Itu Learning Reaction?</strong><br>
+            Learning Reaction adalah bagaimana seseorang memproses informasi, mulai dari menerima hingga merespons dan merefleksikannya untuk pemahaman yang lebih baik.
+        </div>
+
+        <div class="info-grid">
+            <div class="info-card">
+                <div class="info-card-title">🔄 Tahapan</div>
+                <div class="info-list">
+                    1️⃣ Perception - Penerimaan informasi awal<br>
+                    2️⃣ Processing - Pengolahan informasi<br>
+                    3️⃣ Response - Memberikan reaksi terhadap informasi<br>
+                    4️⃣ Reflection & Feedback - Evaluasi dan pemahaman lebih lanjut
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-title">💡 Faktor yang Mempengaruhi</div>
+                <div class="info-list">
+                    ✅ Motivasi - Semangat belajar mempengaruhi pemahaman<br>
+                    ✅ Lingkungan - Suasana yang kondusif membantu fokus<br>
+                    ✅ Metode Pembelajaran - Teknik yang sesuai mempercepat pemahaman<br>
+                    ✅ Emosi & Stres - Pengaruh psikologis terhadap efektivitas belajar
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-card-title">🚀 Cara Meningkatkan</div>
+                <div class="info-list">
+                    🔹 Gunakan metode belajar yang sesuai (visual, auditori, kinestetik)<br>
+                    🔹 Berlatih aktif dengan latihan soal dan diskusi<br>
+                    🔹 Sisihkan waktu refleksi untuk memahami materi lebih dalam<br>
+                    🔹 Terapkan teknik spaced repetition untuk mengingat lebih lama
+                </div>
+            </div>
+        </div>
+
+        <a href="/user_input" class="btn-start">Lanjut ke User Input →</a>
+    </div>
+</body>
+</html>

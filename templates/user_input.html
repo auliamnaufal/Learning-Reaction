@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Learning Reaction</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+    <style>
+      body {
+        background: url("static/photo/user_input.png") no-repeat center center
+          fixed;
+        background-size: cover;
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: "Arial", sans-serif;
+        margin: 0;
+        opacity: 0;
+        animation: fadeIn 1s ease-in-out forwards;
+      }
+
+      .main-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        width: 90%;
+        max-width: 600px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        opacity: 0;
+        animation: slideIn 0.8s ease-out forwards;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      @keyframes slideIn {
+        from {
+          transform: translateY(30px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      .box {
+        width: 100%;
+        padding: 20px;
+        border-radius: 12px;
+        background: white;
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+        transition: 0.3s ease;
+      }
+
+      .btn-submit {
+        width: 100%;
+        padding: 12px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        background: linear-gradient(to right, #ff7e5f, #ff3f34);
+        color: white;
+        transition: 0.3s ease-in-out;
+      }
+
+      .btn-submit:hover {
+        background: linear-gradient(to right, #ff3f34, #ff7e5f);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="main-container">
+      <div class="box">
+        <h3>Unggah File Review</h3>
+        <input
+          type="file"
+          id="fileInput"
+          accept=".txt,.csv"
+          class="form-control" />
+      </div>
+    </div>
+
+    <script>
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", function () {
+          const fileInput = this.files[0];
+          if (!fileInput) return;
+
+          const formData = new FormData();
+          formData.append("file", fileInput);
+
+          fetch("http://127.0.0.1:5000/predict", {
+            method: "POST",
+            body: formData,
+          })
+            .then((response) => response.json()) // Convert response to a Blob
+            .then((data) => {
+              //   const url = window.URL.createObjectURL(blob);
+              //   const a = document.createElement("a");
+              //   a.href = url;
+              //   a.download = "predictions.csv"; // Set the filename
+              //   document.body.appendChild(a);
+              //   a.click();
+              //   document.body.removeChild(a);
+              console.log(data);
+              window.location.href = `/output?filename=${data.file}`;
+            })
+            .catch((error) => console.error("Error:", error));
+        });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OptiLearn NLP</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <style>
+        /* Background */
+        body {
+            background: url("static/photo/background.png") no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            margin: 0;
+        }
+
+        /* Animasi Fade-in */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Container utama */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        /* Title */
+        .title {
+            font-size: 10rem; /* Ukuran judul */
+            font-weight: bold;
+            color: white;
+            text-shadow: 4px 4px 6px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+            animation: fadeIn 1s ease-out forwards;
+        }
+
+        /* Subtitle */
+        .subtitle {
+            font-size: 2rem; 
+            color: black;
+            opacity: 0.9;
+            margin-bottom: 40px;
+            animation: fadeIn 1.2s ease-out forwards;
+        }
+
+        /* Tombol */
+        .btn-start {
+            background: linear-gradient(to bottom, #ffeb8a, #fdd835);
+            color: black;
+            font-size: 1.6rem;
+            padding: 18px 40px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            opacity: 0;
+            transform: scale(0.8);
+            animation: fadeIn 1.5s ease-out forwards;
+        }
+
+        .btn-start:hover {
+            background: linear-gradient(to bottom, #fdd835, #ffeb8a);
+            transform: scale(1.08);
+            box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Container utama -->
+    <div class="container">
+        <div class="title">OptiLearn NLP</div>
+        <div class="subtitle">Learning Reaction Implementation in <br> Natural Language Processing Studies</div>
+        <a href="/mini_overview" class="btn-start">Continue</a>
+    </div>
+</body>
+</html>

@@ -84,6 +84,12 @@
       .btn-submit:hover {
         background: linear-gradient(to right, #ff3f34, #ff7e5f);
       }
+
+      /* Loader Styles */
+      .loader {
+        display: none;
+        margin-top: 15px;
+      }
     </style>
   </head>
   <body>
@@ -95,6 +101,12 @@
           id="fileInput"
           accept=".txt,.csv"
           class="form-control" />
+        <div id="loader" class="loader">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Mengunggah...</span>
+          </div>
+          <p>Memproses file, harap tunggu...</p>
+        </div>
       </div>
     </div>
 
@@ -108,23 +120,24 @@
           const formData = new FormData();
           formData.append("file", fileInput);
 
+          // Disable input and show loader
+          this.disabled = true;
+          document.getElementById("loader").style.display = "block";
+
           fetch("http://127.0.0.1:5000/predict", {
             method: "POST",
             body: formData,
           })
             .then((response) => response.json()) // Convert response to a Blob
             .then((data) => {
-              //   const url = window.URL.createObjectURL(blob);
-              //   const a = document.createElement("a");
-              //   a.href = url;
-              //   a.download = "predictions.csv"; // Set the filename
-              //   document.body.appendChild(a);
-              //   a.click();
-              //   document.body.removeChild(a);
-              console.log(data);
               window.location.href = `/output?filename=${data.file}`;
             })
-            .catch((error) => console.error("Error:", error));
+            .catch((error) => console.error("Error:", error))
+            .finally(() => {
+              // Re-enable input and hide loader in case of failure
+              document.getElementById("fileInput").disabled = false;
+              document.getElementById("loader").style.display = "none";
+            });
         });
     </script>
   </body>

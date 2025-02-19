@@ -79,8 +79,6 @@ def output():
         data_summary = df.to_dict(orient="records")
     except Exception as e:
         return abort(500, description=f"Error reading CSV file: {str(e)}")
-    
-    print(data_summary)
 
     return render_template("output.html", data_summary=data_summary)
 
@@ -159,7 +157,6 @@ def predict():
 
         # Group data by 'predicted_category' and 'label' before summarization
         grouped_data = output_df.groupby(['predicted_category', 'label'])['feedback'].apply(' '.join).reset_index()
-        print(grouped_data)
 
         # Function to summarize text
         def summarize_text(text):

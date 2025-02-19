@@ -110,9 +110,9 @@
         <tbody>
           {% for row in data_summary %}
           <tr>
-            <td>{{ row.Category }}</td>
-            <td>{{ row.Sentiment }}</td>
-            <td>{{ row.Sentence }}</td>
+            <td>{{ row.predicted_category }}</td>
+            <td>{{ row.label }}</td>
+            <td>{{ row.summary }}</td>
           </tr>
           {% endfor %}
         </tbody>

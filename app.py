@@ -29,6 +29,10 @@ sentiment_model = AutoModelForSequenceClassification.from_pretrained(pretrained)
 tokenizer = AutoTokenizer.from_pretrained(pretrained)
 
 sentiment_analysis = pipeline('sentiment-analysis', model=sentiment_model, tokenizer=tokenizer)
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
+
+# Group data by 'predicted_category' and 'label'
+# grouped_data = data.groupby(['predicted_category', 'label'])['feedback'].apply(' '.join).reset_index()
 
 def label_text(teks):
   results = sentiment_analysis(teks)
@@ -106,6 +110,7 @@ def predict():
         file = request.files['file']
         filename = file.filename
 
+        # Read file into DataFrame
         if filename.endswith('.csv'):
             df = pd.read_csv(file)
         elif filename.endswith(('.xls', '.xlsx')):
@@ -115,6 +120,16 @@ def predict():
 
         if 'review' not in df.columns:
             return jsonify({"error": "'review' column not found in file"}), 400
+
+        # Mapping of category numbers to text
+        category_map = {
+            1: "materi",
+            2: "jam mata kuliah",
+            3: "tugas",
+            4: "pembelajaran",
+            5: "ujian",
+            6: "lainnya"
+        }
 
         output_data = []
         for _, row in df.iterrows():
@@ -132,17 +147,43 @@ def predict():
                 category_predictions.append(category_prediction)
                 sentiment_predictions.append(sentiment_prediction)
 
+            # Store category, sentiment, and original feedback
             for sentence, category, sentiment in zip(sentences, category_predictions, sentiment_predictions):
-                output_data.append([sentence, category, sentiment])
+                output_data.append([category, sentiment, sentence])
 
-        output_df = pd.DataFrame(output_data, columns=['Sentence', 'Category', 'Sentiment'])
+        # Convert output data into a DataFrame
+        output_df = pd.DataFrame(output_data, columns=['predicted_category', 'label', 'feedback'])
+
+        # Replace category numbers with text labels
+        output_df['predicted_category'] = output_df['predicted_category'].map(category_map)
+
+        # Group data by 'predicted_category' and 'label' before summarization
+        grouped_data = output_df.groupby(['predicted_category', 'label'])['feedback'].apply(' '.join).reset_index()
+        print(grouped_data)
+
+        # Function to summarize text
+        def summarize_text(text):
+            input_length = len(text.split())  # Count words
+            max_length = min(150, input_length // 2)  # Adjust dynamically (increased from 150 to 200)
+            max_length = max(max_length, 30)  # Ensure a reasonable minimum length (increased from 30 to 50)
+
+            summary = summarizer(text[:1024], max_length=max_length, min_length=30, do_sample=False)  # Adjusted min_length
+            return summary[0]['summary_text']
+
+        # Apply summarization to grouped data
+        grouped_data['summary'] = grouped_data['feedback'].apply(summarize_text)
+
+        # Save the summarized output
         output_filename = filename.replace(".", f"-output-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.")
-        output_df.to_csv("storage/" + output_filename, index=False)
+        output_filepath = os.path.join("storage", output_filename)
+        grouped_data[['predicted_category', 'label', 'summary']].to_csv(output_filepath, index=False)
 
         return jsonify({"message": "Predictions saved successfully", "file": output_filename})
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)

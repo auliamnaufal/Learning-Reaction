@@ -39,18 +39,18 @@ summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
 # Category mapping
 CATEGORY_MAP = {
-    1: "materi",
-    2: "jam mata kuliah",
-    3: "tugas",
-    4: "pembelajaran",
-    5: "ujian",
-    6: "lainnya"
+    1: "Materi",
+    2: "Jam mata kuliah",
+    3: "Tugas",
+    4: "Pembelajaran",
+    5: "Ujian",
+    6: "Lainnya"
 }
 
 LABEL_MAP = {
-    'LABEL_0': 'positif',
-    'LABEL_1': 'netral',
-    'LABEL_2': 'negatif'
+    'LABEL_0': 'Positif',
+    'LABEL_1': 'Netral',
+    'LABEL_2': 'Negatif'
 }
 
 # Ensure storage directory exists

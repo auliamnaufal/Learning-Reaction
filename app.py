@@ -1,186 +1,181 @@
-import io
-from flask import Flask, abort, render_template, request, jsonify, send_file
-from flask_cors import CORS, cross_origin
-import pickle
-import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from transformers import pipeline , AutoTokenizer, AutoModelForSequenceClassification
 import os
+import io
+import pickle
 import datetime
+import pandas as pd
+from flask import Flask, request, render_template, jsonify, send_file, abort
+from flask_cors import CORS, cross_origin
+from sklearn.feature_extraction.text import TfidfVectorizer
+from transformers import pipeline, AutoTokenizer, AutoModelForSequenceClassification
 
+# Initialize Flask app
 app = Flask(__name__)
-CORS(app) # allow CORS for all domains on all routes.
+CORS(app)
 app.config['CORS_HEADERS'] = 'Content-Type'
 
-# Load training data for consistent vectorization
-data_training = pd.read_csv('Training Kategori - Sheet1.csv')
+# Load training data
+TRAINING_DATA_PATH = 'Training Kategori - Sheet1.csv'
+MODEL_PATH = "./predict_category_model.pkl"
+STORAGE_DIR = "storage"
+
+data_training = pd.read_csv(TRAINING_DATA_PATH)
 texts = data_training['feedback'].tolist()
 
-# Load trained model
-category_model = pickle.load(open("./predict_category_model.pkl", "rb"))
+# Load trained category prediction model
+category_model = pickle.load(open(MODEL_PATH, "rb"))
 
-# Initialize vectorizer with training data
+# Initialize vectorizer
 vectorizer = TfidfVectorizer(max_features=5000)
 vectorizer.fit(texts)
 
-pretrained = 'mdhugol/indonesia-bert-sentiment-classification'
+# Load Sentiment Analysis Model
+PRETRAINED_MODEL = 'mdhugol/indonesia-bert-sentiment-classification'
+sentiment_model = AutoModelForSequenceClassification.from_pretrained(PRETRAINED_MODEL)
+tokenizer = AutoTokenizer.from_pretrained(PRETRAINED_MODEL)
+sentiment_pipeline = pipeline('sentiment-analysis', model=sentiment_model, tokenizer=tokenizer)
 
-sentiment_model = AutoModelForSequenceClassification.from_pretrained(pretrained)
-tokenizer = AutoTokenizer.from_pretrained(pretrained)
-
-sentiment_analysis = pipeline('sentiment-analysis', model=sentiment_model, tokenizer=tokenizer)
+# Load Summarization Model
 summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
-# Group data by 'predicted_category' and 'label'
-# grouped_data = data.groupby(['predicted_category', 'label'])['feedback'].apply(' '.join).reset_index()
+# Category mapping
+CATEGORY_MAP = {
+    1: "materi",
+    2: "jam mata kuliah",
+    3: "tugas",
+    4: "pembelajaran",
+    5: "ujian",
+    6: "lainnya"
+}
 
-def label_text(teks):
-  results = sentiment_analysis(teks)
-  label_text = {
-      'LABEL_0' : 'positif',
-      'LABEL_1' : 'netral',
-      'LABEL_2' : 'negatif'
-  }
-  key = results[0]['label']
-  return label_text[key]
+LABEL_MAP = {
+    'LABEL_0': 'positif',
+    'LABEL_1': 'netral',
+    'LABEL_2': 'negatif'
+}
 
+# Ensure storage directory exists
+os.makedirs(STORAGE_DIR, exist_ok=True)
+
+# Helper Functions
+def predict_sentiment(text):
+    """Predicts sentiment label for a given text."""
+    result = sentiment_pipeline(text)
+    return LABEL_MAP[result[0]['label']]
+
+def summarize_text(text):
+    """Summarizes long text using a transformer model."""
+    words = text.split()
+    max_length = min(150, len(words) // 2)
+    max_length = max(max_length, 30)
+
+    summary = summarizer(text[:1024], max_length=max_length, min_length=30, do_sample=False)
+    return summary[0]['summary_text']
+
+def process_file(file):
+    """Reads the uploaded file and returns a pandas DataFrame."""
+    filename = file.filename
+    if filename.endswith('.csv'):
+        return pd.read_csv(file)
+    elif filename.endswith(('.xls', '.xlsx')):
+        return pd.read_excel(file)
+    else:
+        return None
+
+# Routes
 @app.route("/")
 def home():
     return render_template("home.html")
 
-# Route untuk mini overview learning reaction
 @app.route("/mini_overview")
 def mini_overview():
     return render_template("mini_overview.html")
 
-# Route untuk Halaman Input User
 @app.route("/user_input")
 def user_input():
     return render_template("user_input.html")
 
-# Route untuk menampilkan tabel summary
 @app.route("/output")
 def output():
-    filename = request.args.get("filename")  # Get filename from request
-    
+    """Displays the summarized output file in a table."""
+    filename = request.args.get("filename")
     if not filename:
         return abort(400, description="Filename parameter is missing.")
 
-    file_path = os.path.join("storage", filename)
-
+    file_path = os.path.join(STORAGE_DIR, filename)
     if not os.path.isfile(file_path):
         return abort(404, description="File not found.")
 
-    # Read CSV file into a Pandas DataFrame
     try:
         df = pd.read_csv(file_path)
-
-        # Convert DataFrame to list of dictionaries
         data_summary = df.to_dict(orient="records")
+        return render_template("output.html", data_summary=data_summary)
     except Exception as e:
         return abort(500, description=f"Error reading CSV file: {str(e)}")
 
-    return render_template("output.html", data_summary=data_summary)
-
-# Route untuk mengunduh data sebagai CSV
 @app.route("/download", methods=["POST"])
 def download():
-    filename = request.args.get("filename")  # Get filename from request
-
+    """Allows users to download the summarized output file."""
+    filename = request.args.get("filename")
     if not filename:
         return abort(400, description="Filename parameter is missing.")
 
-    file_path = os.path.join("storage/", filename)  # Change "your_directory" as needed
-
+    file_path = os.path.join(STORAGE_DIR, filename)
     if os.path.isfile(file_path):
         return send_file(file_path, as_attachment=True)
 
     return abort(404, description="File not found.")
 
-
 @app.route('/predict', methods=['POST'])
 @cross_origin()
 def predict():
+    """Processes uploaded reviews, predicts category & sentiment, and returns summarized results."""
     try:
         if 'file' not in request.files:
             return jsonify({"error": "No file uploaded"}), 400
 
         file = request.files['file']
-        filename = file.filename
-
-        # Read file into DataFrame
-        if filename.endswith('.csv'):
-            df = pd.read_csv(file)
-        elif filename.endswith(('.xls', '.xlsx')):
-            df = pd.read_excel(file)
-        else:
+        df = process_file(file)
+        if df is None:
             return jsonify({"error": "Unsupported file format. Upload a CSV or Excel file."}), 400
 
         if 'review' not in df.columns:
             return jsonify({"error": "'review' column not found in file"}), 400
 
-        # Mapping of category numbers to text
-        category_map = {
-            1: "materi",
-            2: "jam mata kuliah",
-            3: "tugas",
-            4: "pembelajaran",
-            5: "ujian",
-            6: "lainnya"
-        }
-
-        output_data = []
+        # Process each review
+        predictions = []
         for _, row in df.iterrows():
             review_text = str(row['review'])
             sentences = [s.strip() for s in review_text.split('.') if s.strip()]
             
-            category_predictions = []
-            sentiment_predictions = []
-            
             for sentence in sentences:
-                text_transformed = vectorizer.transform([sentence])
-                category_prediction = category_model.predict(text_transformed)[0]
-                sentiment_prediction = label_text(sentence)
-                
-                category_predictions.append(category_prediction)
-                sentiment_predictions.append(sentiment_prediction)
+                text_vector = vectorizer.transform([sentence])
+                category_prediction = category_model.predict(text_vector)[0]
+                sentiment_prediction = predict_sentiment(sentence)
 
-            # Store category, sentiment, and original feedback
-            for sentence, category, sentiment in zip(sentences, category_predictions, sentiment_predictions):
-                output_data.append([category, sentiment, sentence])
+                predictions.append({
+                    "predicted_category": CATEGORY_MAP.get(category_prediction, "Unknown"),
+                    "label": sentiment_prediction,
+                    "feedback": sentence
+                })
 
-        # Convert output data into a DataFrame
-        output_df = pd.DataFrame(output_data, columns=['predicted_category', 'label', 'feedback'])
+        # Convert to DataFrame
+        output_df = pd.DataFrame(predictions)
 
-        # Replace category numbers with text labels
-        output_df['predicted_category'] = output_df['predicted_category'].map(category_map)
-
-        # Group data by 'predicted_category' and 'label' before summarization
+        # Group and summarize
         grouped_data = output_df.groupby(['predicted_category', 'label'])['feedback'].apply(' '.join).reset_index()
-
-        # Function to summarize text
-        def summarize_text(text):
-            input_length = len(text.split())  # Count words
-            max_length = min(150, input_length // 2)  # Adjust dynamically (increased from 150 to 200)
-            max_length = max(max_length, 30)  # Ensure a reasonable minimum length (increased from 30 to 50)
-
-            summary = summarizer(text[:1024], max_length=max_length, min_length=30, do_sample=False)  # Adjusted min_length
-            return summary[0]['summary_text']
-
-        # Apply summarization to grouped data
         grouped_data['summary'] = grouped_data['feedback'].apply(summarize_text)
 
         # Save the summarized output
-        output_filename = filename.replace(".", f"-output-{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.")
-        output_filepath = os.path.join("storage", output_filename)
+        timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        output_filename = f"{file.filename.rsplit('.', 1)[0]}-output-{timestamp}.csv"
+        output_filepath = os.path.join(STORAGE_DIR, output_filename)
+
         grouped_data[['predicted_category', 'label', 'summary']].to_csv(output_filepath, index=False)
 
         return jsonify({"message": "Predictions saved successfully", "file": output_filename})
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
